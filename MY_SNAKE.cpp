@@ -1,4 +1,4 @@
-﻿#include "snake_game.h"
+#include "snake_game.h"
 
 // Функция инициализации игры
 void init_game()
@@ -9,7 +9,7 @@ void init_game()
     head_y = game_height / 2;
     fruit_x = rand() % game_width; // Случайная позиция яблока
     fruit_y = rand() % game_height;
-    player_points = 0;
+    player.score = 0;
     tail_length = 0; // Хвост змеи отсутствует в начале
     tail_x = new int[100]; // Выделение памяти для хвоста
     tail_y = new int[100];
@@ -26,11 +26,11 @@ void hide_cursor()
 }
 
 // Функция отрисовки игрового поля
-void render_game(string player_name)
+void render_game()
 {
     set_console_cursor(0, 0); // Перемещаем курсор в начало вместо очистки экрана
 
-    set_window_title("Snake Game - " + player_name);
+    set_window_title("Snake Game - " + player.name);
 
     // Верхняя граница
     set_text_color(13); // Фиолетовый цвет границы
@@ -75,7 +75,7 @@ void render_game(string player_name)
 
     // Очки и имя игрока
     set_text_color(11); // Цвет для текста
-    cout << player_name << "'s Points: " << player_points << "\n"; // Окрашиваем текст
+    cout << player.name << "'s Points: " << player.score << "\n"; // Окрашиваем текст
     set_text_color(7); // Вернуть стандартный цвет
 }
 
@@ -127,7 +127,7 @@ void update_game()
     }
     // Проверка на поедание яблока
     if (head_x == fruit_x && head_y == fruit_y) {
-        player_points += 10;
+        player.score += 10;
         fruit_x = rand() % game_width;
         fruit_y = rand() % game_height;
         tail_length++;
@@ -175,10 +175,10 @@ int set_game_difficulty()
                 return difficulty; // Возвращаем значение сложности
             case '2':
                 difficulty = 100;
-                return difficulty; // Возвращаем значение сложности
+                return difficulty; 
             case '3':
                 difficulty = 50;
-                return difficulty; // Возвращаем значение сложности
+                return difficulty; 
             default:
                 throw invalid_argument("Invalid choice! Please enter 1, 2, or 3.");
             }
@@ -187,6 +187,12 @@ int set_game_difficulty()
             cerr << e.what() << "\n"; // Выводим сообщение об ошибке
         }
     }
+}
+
+// Функция установки данных игрока
+void setup_player() {
+    cout << "Enter your name: ";
+    cin >> player.name;
 }
 
 // Установка позиции курсора в консоли
@@ -207,44 +213,46 @@ void set_text_color(int color)
 // Установка заголовка окна
 void set_window_title(const string& title)
 {
-    SetConsoleTitleA(title.c_str()); // Устанавливаем заголовок
+    SetConsoleTitleA(title.c_str()); // Установка заголовка окна
 }
 
-// Очистка динамической памяти
-void free_memory()
+// Основной цикл игры
+void run_game()
 {
-    delete[] tail_x;
+    setup_player();
+    int game_speed = set_game_difficulty(); // Устанавливаем сложность
+    
+    init_game(); 
+    hide_cursor(); // Скрываем курсор
+    clock_t start_time = clock(); // Запоминаем время начала игры
+
+    while (!game_over) { // Цикл игры до завершения
+        render_game(); // Отрисовка игрового поля
+        process_input(); // Обработка ввода пользователя
+        update_game(); // Обновление состояния игры
+        Sleep(game_speed); // Задержка на основе выбранной сложности
+    }
+    clock_t end_time = clock(); // Запоминаем время окончания игры
+    double duration = double(end_time - start_time) / CLOCKS_PER_SEC; // Вычисляем продолжительность игры
+    // Конец игры
+    set_text_color(12); // Красный цвет 
+    cout << "Game Over! " << player.name << ", your final score is: " << player.score << "\n";
+    cout << "Time played: " << duration << " seconds\n";
+    set_text_color(7); // Возвращаем стандартный цвет
+
+}
+
+void free_memory() {
+    delete[] tail_x; 
     delete[] tail_y;
 }
 
-// Основная функция игры
+
 int main()
 {
-    string player_name;
-    cout << "Enter your name: ";
-    cin >> player_name;
+    run_game(); // Запуск игры
 
-    hide_cursor(); // Скрываем курсор
-    int difficulty = set_game_difficulty(); // Устанавливаем сложность
-    init_game(); // Инициализируем игру
-    clock_t start_time = clock(); // Запоминаем время начала игры
-
-    while (!game_over) {
-        render_game(player_name); // Отрисовываем игровое поле
-        process_input(); // Обрабатываем ввод
-        update_game(); // Обновляем состояние игры
-        Sleep(difficulty); // Задержка в зависимости от сложности
-    }
-
-    clock_t end_time = clock(); // Запоминаем время окончания игры
-    double duration = double(end_time - start_time) / CLOCKS_PER_SEC; // Вычисляем продолжительность игры
-
-    // Сообщение о завершении игры
-    set_console_cursor(0, game_height + 2);
-    cout << "Game Over! Your score: " << player_points << "\n";
-    cout << "Time played: " << duration << " seconds\n";
-
-    free_memory(); // Очищаем динамическую память
-
-    
+   
 }
+
+
